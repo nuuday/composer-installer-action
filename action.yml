@@ -1,0 +1,83 @@
+name: 'Composer install'
+description: 'Installs php with extentions and run composer install'
+inputs:
+  PHP_VERSION:
+    description: 'PHP version to install'
+    required: true
+  PHP_EXTENSIONS:
+    description: 'extensions to install'
+    required: true
+  CACHE_KEY:
+    description: 'cache key for cache busting'
+    required: false
+    default: 'cache_v1'
+  SSH_PRIVATE_KEY:
+    description: 'Private key to access github'
+    required: false
+    default: ''
+  SSH_PUBLIC_KEY:
+    description: 'Public key to access github'
+    required: false
+    default: ''
+  COMPOSER_ARGUMENTS:
+    description: 'all arguments passed to composer'
+    required: false
+    default: '--no-progress --prefer-dist --optimize-autoloader'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup cache environment
+      id: extcache
+      uses: shivammathur/cache-extensions@v1
+      with:
+        php-version: ${{ inputs.PHP_VERSION }}
+        extensions: ${{ inputs.PHP_EXTENSIONS }}
+        key: ${{ inputs.CACHE_KEY }}
+
+    - name: Cache extensions
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.extcache.outputs.dir }}
+        key: ${{ steps.extcache.outputs.key }}
+        restore-keys: ${{ steps.extcache.outputs.key }}
+
+    - name: Setup PHP environment
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ inputs.PHP_VERSION }}
+        extensions: ${{ inputs.PHP_EXTENSIONS }}
+
+    - name: Get composer cache directory
+      shell: bash
+      id: composer-cache
+      run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+    - name: Cache dependencies
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+        restore-keys: ${{ runner.os }}-composer-
+
+    - name: setup ssh keys
+#      if: ${{ inputs.SSH_PRIVATE_KEY != '' }}
+      shell: bash
+      env:
+        PRIVATE_KEY: ${{ inputs.SSH_PRIVATE_KEY }}
+        PUBLIC_KEY: ${{ inputs.SSH_PUBLIC_KEY }}
+      run: |
+        mkdir -p ~/.ssh
+        touch ~/.gitconfig
+        ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+
+        echo "$PRIVATE_KEY" > ~/.ssh/action_rsa
+        echo "$PUBLIC_KEY" > ~/.ssh/action_rsa.pub
+        chmod 600 ~/.ssh/action_rsa
+
+        git config --global core.sshCommand "ssh -i ~/.ssh/action_rsa"
+
+    - name: Install Composer dependencies
+      shell: bash
+      run: composer install ${{ inputs.COMPOSER_ARGUMENTS }}
+
