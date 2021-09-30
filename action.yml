@@ -19,10 +19,14 @@ inputs:
     description: 'Public key to access github'
     required: false
     default: ''
+  COMPOSER_DEFAULT_ARGUMENTS:
+    description: 'Default composer arguments, can be overriden if required'
+    required: false
+    default: '--no-progress --prefer-dist --optimize-autoloader'
   COMPOSER_ARGUMENTS:
     description: 'all arguments passed to composer'
     required: false
-    default: '--no-progress --prefer-dist --optimize-autoloader'
+    default: 'additional composer arguments which you require'
 
 runs:
   using: "composite"
@@ -61,6 +65,7 @@ runs:
         restore-keys: ${{ runner.os }}-composer-
 
     - name: setup ssh keys
+#      Currently doesn't work with composite actions, future TODO
 #      if: ${{ inputs.SSH_PRIVATE_KEY != '' }}
       shell: bash
       env:
@@ -79,5 +84,5 @@ runs:
 
     - name: Install Composer dependencies
       shell: bash
-      run: composer install ${{ inputs.COMPOSER_ARGUMENTS }}
+      run: composer install ${{ inputs.COMPOSER_DEFAULT_ARGUMENTS }} ${{ inputs.COMPOSER_ARGUMENTS }}
 
