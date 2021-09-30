@@ -24,9 +24,9 @@ inputs:
     required: false
     default: '--no-progress --prefer-dist --optimize-autoloader'
   COMPOSER_ARGUMENTS:
-    description: 'all arguments passed to composer'
+    description: 'additional composer arguments which you require'
     required: false
-    default: 'additional composer arguments which you require'
+    default: ''
 
 runs:
   using: "composite"
