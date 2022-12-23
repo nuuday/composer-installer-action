@@ -7,6 +7,9 @@ inputs:
   PHP_EXTENSIONS:
     description: 'extensions to install'
     required: true
+  PHP_TOOLS:
+    description: 'tools to install'
+    required: false
   CACHE_KEY:
     description: 'cache key for cache busting'
     required: false
@@ -51,6 +54,7 @@ runs:
       with:
         php-version: ${{ inputs.PHP_VERSION }}
         extensions: ${{ inputs.PHP_EXTENSIONS }}
+        tools: ${{ inputs.PHP_TOOLS }}
 
     - name: Get composer cache directory
       shell: bash
