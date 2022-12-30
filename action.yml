@@ -10,6 +10,7 @@ inputs:
   PHP_TOOLS:
     description: 'tools to install'
     required: false
+    default: 'phpcs:3.5.8' 
   CACHE_KEY:
     description: 'cache key for cache busting'
     required: false
